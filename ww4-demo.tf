@@ -10,9 +10,12 @@ variable "nr_nodes" {
   default = "4"
 }
 
-
 variable "profile" {
   default = "ww4-demo"
+}
+
+locals {
+  config = jsondecode(file("${path.module}/config.json"))
 }
 
 provider "libvirt" {
@@ -32,7 +35,7 @@ resource "libvirt_volume" "my-vdisk" {
 
 resource "libvirt_network" "my_net" {
   name      = "ww4-demo-${random_id.base.hex}"
-  addresses = ["${var.IPNET}/24"]
+  addresses = ["${local.config.IPNET}/24"]
   dhcp {
     enabled = false
   }

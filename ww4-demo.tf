@@ -6,10 +6,6 @@ terraform {
   }
 }
 
-variable "nr_nodes" {
-  default = "4"
-}
-
 variable "profile" {
   default = "ww4-demo"
 }
@@ -26,14 +22,29 @@ resource "random_id" "base" {
   byte_length = 2
 }
 
-resource "libvirt_volume" "my-vdisk" {
+resource "libvirt_pool" "demo-pool" {
+  name = "demo-pool"
+  type = "dir"
+  path = local.config.STORAGE
+}
+
+
+resource "libvirt_volume" "ww4-host-vol" {
   name   = "${var.profile}-vdisk-${random_id.base.hex}.qcow2"
-  pool   = "tmp"
+  pool   = libvirt_pool.demo-pool.name
   source = "Leap-15.5_appliance.x86_64-0.0.1.qcow2"
   format = "qcow2"
 }
 
-resource "libvirt_network" "my_net" {
+resource "libvirt_volume" "ww4-node-vol" {
+  name   = "${var.profile}-vdisk-${count.index}-${random_id.base.hex}.qcow2"
+  pool   = libvirt_pool.demo-pool.name
+  format = "qcow2"
+  size   = 33554432
+  count  = local.config.NODES
+}
+
+resource "libvirt_network" "ww4-net" {
   name      = "ww4-demo-${random_id.base.hex}"
   addresses = ["${local.config.IPNET}/24"]
   dhcp {
@@ -53,11 +64,51 @@ resource "libvirt_domain" "ww4-host" {
   }
 
   network_interface {
-    network_id     = libvirt_network.my_net.id
+    network_id     = libvirt_network.ww4-net.id
   }
 
   disk {
-    volume_id = libvirt_volume.my-vdisk.id
+    volume_id = libvirt_volume.ww4-host-vol.id
+  }
+
+  console {
+    type        = "pty"
+    target_port = "0"
+    target_type = "serial"
+  }
+
+  console {
+    type        = "pty"
+    target_type = "virtio"
+    target_port = "1"
+  }
+
+  graphics {
+    type        = "vnc"
+    listen_type = "address"
+    autoport    = "true"
+  }
+}
+resource "libvirt_domain" "ww4-node" {
+  running = false
+  count  = local.config.NODES
+  name   = "ww4-node${count.index+1}"
+  memory = "4096"
+  vcpu   = 4
+  cpu = {
+    mode = "host-passthrough"
+  }
+
+  boot_device {
+    dev = [ "network" ]
+  }
+
+  network_interface {
+    network_id     = libvirt_network.ww4-net.id
+  }
+
+  disk {
+    volume_id = libvirt_volume.ww4-node-vol[count.index].id
   }
 
   console {
@@ -79,3 +130,7 @@ resource "libvirt_domain" "ww4-host" {
   }
 }
 
+
+output "vm_names" {
+  value = concat(libvirt_domain.ww4-node.*.name, libvirt_domain.ww4-host.*.name)
+}

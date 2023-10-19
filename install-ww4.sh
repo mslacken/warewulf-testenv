@@ -31,6 +31,12 @@ function wait() {
   echo -ne "\r"
 }
 
+# check that host is up
+while true ; do 
+  ssh root@$IPADDR uname -n 2> /dev/null && break || echo -n "."
+  sleep 1
+done
+
 run_on_hostq $IPADDR "zypper ref" "Refreshing repos"
 run_on_host $IPADDR "zypper in -y warewulf4" "Installing warewulf4"
 wait 2
@@ -46,5 +52,9 @@ run_on_host $IPADDR "wwctl node add demo[01-04] -I $IPSTART" "Adding 4 nodes"
 wait 2
 run_on_host $IPADDR "wwctl container import docker://registry.opensuse.org/science/warewulf/leap-15.4/containers/kernel:latest leap15.4 --setdefault" "Importing Leap15.4 as default container:"
 wait 2
-run_on_host $IPADDR "wwctl node set demo01 --discoverable=yes -y" "Preparing node demo01 for bootinh:"
-sudo virsh start ww4-node1
+run_on_host $IPADDR "wwctl node set demo01 --discoverable=yes -y" "Preparing node demo01 for booting:"
+virsh -c qemu:///system start ww4-node1
+virt-viewer -w -c qemu:///system ww4-node1 &
+sleep 60
+kill %1
+

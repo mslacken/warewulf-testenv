@@ -59,7 +59,7 @@ resource "libvirt_domain" "ww4-host" {
   name   = "ww4-host"
   memory = "8192"
   vcpu   = 8
-  cpu = {
+  cpu  {
     mode = "host-passthrough"
   }
 
@@ -95,7 +95,7 @@ resource "libvirt_domain" "ww4-node" {
   name   = "ww4-node${count.index+1}"
   memory = "4096"
   vcpu   = 4
-  cpu = {
+  cpu  {
     mode = "host-passthrough"
   }
 

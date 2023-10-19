@@ -19,7 +19,7 @@ function run_on_hostq() {
 }
 
 function run_on_host() {
-  run_on_hostq "$1" "$2" "${3} $2"
+  run_on_hostq "$1" "$2" "`tput smul`${3}`tput rmul` $2"
 }
 
 function wait() {
@@ -31,7 +31,15 @@ function wait() {
   echo -ne "\r"
 }
 
+function show() {
+  echo `tput smul`$@`tput rmul`
+}
+# destroy ressources
+terraform destroy -auto-approve
+terraform apply -auto-approve
+
 # check that host is up
+show "Waiting for the ww4-host ($IP) to become online"
 while true ; do 
   ssh root@$IPADDR uname -n 2> /dev/null && break || echo -n "."
   sleep 1

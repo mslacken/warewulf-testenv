@@ -11,15 +11,13 @@ function run_on_hostq() {
   local cmd=$2
   local comment=$3
   if [ -n "$comment" ]; then 
-    echo "`tput bold`$comment`tput sgr0`"
-  #else 
-  #  echo "`tput bold`running command $cmd host: $remhost`tput sgr0`"
+    echo -e "`tput bold``tput smul`$comment`tput rmul``tput sgr0`"
   fi
   ssh -xo "StrictHostKeyChecking=no" root@$remhost $cmd
 }
 
 function run_on_host() {
-  run_on_hostq "$1" "$2" "`tput smul`${3}`tput rmul` $2"
+  run_on_hostq "$1" "$2" "${3}`tput rmul`\n$2"
 }
 
 function wait() {
@@ -32,7 +30,7 @@ function wait() {
 }
 
 function show() {
-  echo `tput smul`$@`tput rmul`
+  echo `tput bold``tput smul`$@`tput rmul``tput sgr0`
 }
 # destroy ressources
 terraform destroy -auto-approve
@@ -52,15 +50,16 @@ run_on_hostq $IPADDR "cat /etc/warewulf/warewulf.conf" "Check warewulf configura
 wait 2
 run_on_hostq $IPADDR "sed -i s/DHCPD_INTERFACE=\"\"/DHCPD_INTERFACE=\"ANY\"/ /etc/sysconfig/dhcpd" "Setting DHCPD_INTERFACE=\"ANY\" in /etc/sysconfig/dhcpd"
 wait 2
-run_on_host $IPADDR "systemctl enable --now warewulfd" "Start warewulfd:"
+run_on_host $IPADDR "systemctl enable --now warewulfd" "Start warewulfd"
 wait 2
-run_on_host $IPADDR "wwctl configure -a" "Configure warewulf, creating all the conguration files:"
+run_on_host $IPADDR "wwctl configure -a" "Configure warewulf, creating all the conguration files"
 wait 2
 run_on_host $IPADDR "wwctl node add demo[01-04] -I $IPSTART" "Adding 4 nodes"
 wait 2
-run_on_host $IPADDR "wwctl container import docker://registry.opensuse.org/science/warewulf/leap-15.4/containers/kernel:latest leap15.4 --setdefault" "Importing Leap15.4 as default container:"
+run_on_host $IPADDR "wwctl container import docker://registry.opensuse.org/science/warewulf/leap-15.4/containers/kernel:latest leap15.4 --setdefault" "Importing Leap15.4 as default container"
 wait 2
-run_on_host $IPADDR "wwctl node set demo01 --discoverable=yes -y" "Preparing node demo01 for booting:"
+run_on_host $IPADDR "wwctl node set demo01 --discoverable=yes -y" "Preparing node demo01 for booting"
+write "Start the node demo1 and conncet with vier-viewer to it"
 virsh -c qemu:///system start ww4-node1
 virt-viewer -w -c qemu:///system ww4-node1 &
 sleep 60

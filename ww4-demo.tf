@@ -32,7 +32,7 @@ resource "libvirt_pool" "demo-pool" {
 resource "libvirt_volume" "ww4-host-vol" {
   name   = "${var.profile}-vdisk-${random_id.base.hex}.qcow2"
   pool   = libvirt_pool.demo-pool.name
-  source = "Leap-15.5_appliance.x86_64-0.0.1.qcow2"
+  source = local.config.IMAGE
   format = "qcow2"
 }
 
@@ -55,11 +55,38 @@ resource "libvirt_network" "ww4-net" {
   }
 }
 
+data "template_file" "user_data" {
+  template = file("${path.module}/cloud_init.cfg")
+}
+
+data "template_file" "meta_data" {
+  template = file("${path.module}/meta.cfg")
+}
+
+data "template_file" "network_config" {
+  template = file("${path.module}/network_config.cfg")
+  vars = {
+    ip_addr = local.config.IPADDR
+    ip_gateway = local.config.GATEWAY
+    ip_netmask = local.config.NETMASK
+    dns = local.config.DNS
+  }
+}
+
+resource "libvirt_cloudinit_disk" "hostinit" {
+  name           = "commoninit.iso"
+  user_data      = data.template_file.user_data.rendered
+  network_config = data.template_file.network_config.rendered
+  pool           = libvirt_pool.demo-pool.name
+}
+
+
 resource "libvirt_domain" "ww4-host" {
   name   = "ww4-host"
+  cloudinit = libvirt_cloudinit_disk.hostinit.id
   memory = "8192"
   vcpu   = 8
-  cpu  {
+  cpu = {
     mode = "host-passthrough"
   }
 
@@ -89,13 +116,15 @@ resource "libvirt_domain" "ww4-host" {
     autoport    = "true"
   }
 }
+
+
 resource "libvirt_domain" "ww4-node" {
   running = false
   count  = local.config.NODES
   name   = "ww4-node${count.index+1}"
   memory = "4096"
-  vcpu   = 4
-  cpu  {
+  vcpu  = 4
+  cpu = {
     mode = "host-passthrough"
   }
 

@@ -32,8 +32,14 @@ run_on_host $IPADDR "wwctl container import docker://registry.opensuse.org/scien
 wait 2
 run_on_host $IPADDR "wwctl node set demo01 --discoverable=yes -y" "Preparing node demo01 for booting"
 show "Start the node demo1 and conncet with vier-viewer to it"
-virsh -c qemu:///system start ww4-node1
-virt-viewer -w -c qemu:///system ww4-node1 &
+virsh -c qemu:///system start demo01
+virt-viewer -w -c qemu:///system demo01 &
 wait 20
 kill %1
+
+show "Add the MAC addresses for the rest of the nodes"
+for host in $(jq "keys[]" macs.json ) ; do
+  mac=$(jq ".$host" macs.json)
+  run_on_host $IPADDR "wwctl node set $host -y --netname default --hwaddr $mac" 
+done
 

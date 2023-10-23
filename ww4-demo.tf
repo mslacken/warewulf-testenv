@@ -143,7 +143,7 @@ resource "libvirt_domain" "ww4-host" {
 resource "libvirt_domain" "ww4-node" {
   running = false
   count  = local.config.NODES
-  name   = "ww4-node${count.index+1}"
+  name   = format("demo%02s",count.index + 1)
   memory = "4096"
   vcpu  = 4
   cpu = {
@@ -185,3 +185,9 @@ resource "libvirt_domain" "ww4-node" {
 output "vm_names" {
   value = concat(libvirt_domain.ww4-node.*.name, libvirt_domain.ww4-host.*.name)
 }
+
+resource "local_file" "vm_mac" {
+  content = jsonencode({for x in libvirt_domain.ww4-node: x.name => x.network_interface.0.mac })
+  filename = "macs.json"
+}
+

@@ -12,7 +12,19 @@ variable "profile" {
 
 locals {
   config = jsondecode(file("${path.module}/config.json"))
+  reg = jsondecode(file("${path.module}/sle-keys.json"))
+  ed25519_public = file("${path.module}/kiwi-description/root/etc/ssh/ssh_host_ed25519_key.pub")
+  ed25519_private = file("${path.module}/kiwi-description/root/etc/ssh/ssh_host_ed25519_key")
+  dsa_public = file("${path.module}/kiwi-description/root/etc/ssh/ssh_host_ed25519_key.pub")
+  dsa_private = file("${path.module}/kiwi-description/root/etc/ssh/ssh_host_ed25519_key")
+  ecdsa_public = file("${path.module}/kiwi-description/root/etc/ssh/ssh_host_ed25519_key.pub")
+  ecdsa_private = file("${path.module}/kiwi-description/root/etc/ssh/ssh_host_ed25519_key")
+  rsa_public = file("${path.module}/kiwi-description/root/etc/ssh/ssh_host_ed25519_key.pub")
+  rsa_private = file("${path.module}/kiwi-description/root/etc/ssh/ssh_host_ed25519_key")
+  authorized =file("~/.ssh/authorized_keys")
 }
+
+
 
 provider "libvirt" {
   uri = "qemu:///system"
@@ -23,7 +35,7 @@ resource "random_id" "base" {
 }
 
 resource "libvirt_pool" "demo-pool" {
-  name = "demo-pool"
+  name = "${var.profile}-pool"
   type = "dir"
   path = local.config.STORAGE
 }
@@ -57,10 +69,20 @@ resource "libvirt_network" "ww4-net" {
 
 data "template_file" "user_data" {
   template = file("${path.module}/cloud_init.cfg")
-}
-
-data "template_file" "meta_data" {
-  template = file("${path.module}/meta.cfg")
+  vars = {
+    email = local.reg.EMAIL
+    sle-reg = local.reg.SLE-REG
+    sle-hpc-reg = local.reg.SLE-HPC-REG
+    ed25519_private = local.ed25519_private
+    ed25519_public = local.ed25519_public
+    dsa_private = local.ed25519_private
+    dsa_public = local.ed25519_public
+    ecdsa_private = local.ed25519_private
+    ecdsa_public = local.ed25519_public
+    rsa_private = local.ed25519_private
+    rsa_public = local.ed25519_public
+    authorized = local.authorized
+  }
 }
 
 data "template_file" "network_config" {

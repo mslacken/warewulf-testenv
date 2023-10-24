@@ -16,7 +16,7 @@ show "Waiting for ww4-host to finish initial configuration"
 ssh -o 'ConnectionAttempts 5' -x root@$IPADDR "which cloud-init > /dev/null" && ssh -o 'ConnectionAttempts 5' -x root@$IPADDR "cloud-init status --wait"
 
 run_on_hostq $IPADDR "zypper ref" "Refreshing repos"
-run_on_host $IPADDR "zypper in -y nfs-kernel-server warewulf4" "Installing warewulf4"
+run_on_host $IPADDR "zypper in -y nfs-kernel-server bash-completion warewulf4" "Installing warewulf4"
 wait 2
 run_on_hostq $IPADDR "cat /etc/warewulf/warewulf.conf" "Check warewulf configuration /etc/warewulf/warewulf.conf"
 wait 2
@@ -24,24 +24,15 @@ run_on_hostq $IPADDR "sed -i s/DHCPD_INTERFACE=\"\"/DHCPD_INTERFACE=\"ANY\"/ /et
 wait 2
 run_on_host $IPADDR "systemctl enable --now warewulfd" "Start warewulfd"
 wait 2
-run_on_host $IPADDR "wwctl configure -a" "Configure warewulf, creating all the conguration files"
+run_on_host $IPADDR "wwctl configure -a" "Configure warewulf, creating all the configuration files"
 wait 2
 run_on_host $IPADDR "wwctl node add demo[01-04] -I $IPSTART" "Adding 4 nodes"
 wait 2
-run_on_host $IPADDR "wwctl container import docker://registry.opensuse.org/science/warewulf/leap-15.4/containers/kernel:latest leap15.4 --setdefault" "Importing Leap15.4 as default container"
+run_on_host $IPADDR "wwctl container import $DEMOCONTSRC $DEMOCONT --setdefault" "Importing Leap15.4 as default container"
 wait 2
-run_on_host $IPADDR "wwctl node set demo01 --discoverable=yes -y" "Preparing node demo01 for booting"
-show "Start the node demo1 and conncet with vier-viewer to it"
-virsh -c qemu:///system start demo01
-virt-viewer -w -c qemu:///system demo01 &
-wait 20
-kill %1
-virsh -c qemu:///system destroy demo01
-
 show "Add the MAC addresses for the rest of the nodes from pre defined json/csv"
 for host in $(jq "keys[]" macs.json ) ; do
   mac=$(jq ".$host" macs.json)
   run_on_host $IPADDR "wwctl node set $host -y --netname default --hwaddr $mac" 
 done
-
 

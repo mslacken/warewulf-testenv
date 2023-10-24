@@ -36,10 +36,12 @@ virsh -c qemu:///system start demo01
 virt-viewer -w -c qemu:///system demo01 &
 wait 20
 kill %1
+virsh -c qemu:///system destroy demo01
 
-show "Add the MAC addresses for the rest of the nodes"
+show "Add the MAC addresses for the rest of the nodes from pre defined json/csv"
 for host in $(jq "keys[]" macs.json ) ; do
   mac=$(jq ".$host" macs.json)
   run_on_host $IPADDR "wwctl node set $host -y --netname default --hwaddr $mac" 
 done
+
 

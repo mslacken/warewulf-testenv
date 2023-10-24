@@ -41,11 +41,25 @@ resource "libvirt_pool" "demo-pool" {
 }
 
 
-resource "libvirt_volume" "ww4-host-vol" {
-  name   = "${var.profile}-vdisk-${random_id.base.hex}.qcow2"
+resource "libvirt_volume" "ww4-host-base-vol" {
+  name   = "ww4-host-base-vol"
   pool   = libvirt_pool.demo-pool.name
   source = local.config.IMAGE
   format = "qcow2"
+}
+
+resource "libvirt_volume" "ww4-host-vol" {
+  name   = "${var.profile}-vdisk-${random_id.base.hex}.qcow2"
+  pool   = libvirt_pool.demo-pool.name
+  base_volume_id = libvirt_volume.ww4-host-base-vol.id
+  format = "qcow2"
+  size = 40399536128
+}
+
+resource "libvirt_volume" "ww4-host-cache" {
+  name   = "Cache.qcow2"
+  format = "qcow2"
+  size = 39452672
 }
 
 resource "libvirt_volume" "ww4-node-vol" {
@@ -118,6 +132,10 @@ resource "libvirt_domain" "ww4-host" {
 
   disk {
     volume_id = libvirt_volume.ww4-host-vol.id
+  }
+
+  disk {
+    volume_id = libvirt_volume.ww4-host-cache.id
   }
 
   console {

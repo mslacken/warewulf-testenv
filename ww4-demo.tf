@@ -56,19 +56,14 @@ resource "libvirt_volume" "ww4-host-vol" {
   size = 40399536128
 }
 
-resource "libvirt_volume" "ww4-host-cache" {
-  name   = "Cache.qcow2"
-  format = "qcow2"
-  size = 39452672
-}
-
 resource "libvirt_volume" "ww4-node-vol" {
   name   = "${var.profile}-vdisk-${count.index}-${random_id.base.hex}.qcow2"
   pool   = libvirt_pool.demo-pool.name
   format = "qcow2"
-  size   = 33554432
-  count  = local.config.NODES
+  size = 40399536128
+  count  = local.config.NODES + local.config.EFI
 }
+
 
 resource "libvirt_network" "ww4-net" {
   name      = "ww4-demo-${random_id.base.hex}"
@@ -134,10 +129,6 @@ resource "libvirt_domain" "ww4-host" {
     volume_id = libvirt_volume.ww4-host-vol.id
   }
 
-  disk {
-    volume_id = libvirt_volume.ww4-host-cache.id
-  }
-
   console {
     type        = "pty"
     target_port = "0"
@@ -180,16 +171,41 @@ resource "libvirt_domain" "ww4-node" {
     volume_id = libvirt_volume.ww4-node-vol[count.index].id
   }
 
-  console {
-    type        = "pty"
-    target_port = "0"
-    target_type = "serial"
+  graphics {
+    type        = "vnc"
+    listen_type = "address"
+    autoport    = "true"
+  }
+  
+}
+
+resource "libvirt_domain" "ww4-efi" {
+  running = false
+  count  = local.config.EFI
+  name   = format("efi%02s",count.index + 1)
+  memory = "4096"
+  vcpu  = 4
+  cpu = {
+    mode = "host-passthrough"
+  }
+  machine = "pc-q35-7.0"
+  firmware = "/usr/share/qemu/ovmf-x86_64-smm-ms-code.bin"
+  nvram {
+    file     = "/var/tmp/efi${count.index}_EFIVARS.fd"
+    template = "/var/tmp/efivars-template.fd"
   }
 
-  console {
-    type        = "pty"
-    target_type = "virtio"
-    target_port = "1"
+
+  boot_device {
+    dev = [ "network" ]
+  }
+
+  network_interface {
+    network_id     = libvirt_network.ww4-net.id
+  }
+
+  disk {
+    volume_id = libvirt_volume.ww4-node-vol[count.index+local.config.NODES].id
   }
 
   graphics {
@@ -197,15 +213,15 @@ resource "libvirt_domain" "ww4-node" {
     listen_type = "address"
     autoport    = "true"
   }
+  
 }
 
-
 output "vm_names" {
-  value = concat(libvirt_domain.ww4-node.*.name, libvirt_domain.ww4-host.*.name)
+  value = concat(libvirt_domain.ww4-efi.*.name, libvirt_domain.ww4-node.*.name, libvirt_domain.ww4-host.*.name)
 }
 
 resource "local_file" "vm_mac" {
-  content = jsonencode({for x in libvirt_domain.ww4-node: x.name => x.network_interface.0.mac })
+  content = jsonencode({for x in concat(libvirt_domain.ww4-node,libvirt_domain.ww4-efi): x.name => x.network_interface.0.mac })
   filename = "macs.json"
 }
 

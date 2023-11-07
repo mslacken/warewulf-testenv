@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 source config
 # prepare stuff
-if [ -z $IMAGE ] ; then
+if [ ! -e $IMAGE ] ; then
   wget $IMAGESRC
 fi
 # create host ssh key

@@ -8,6 +8,7 @@ fi
 if [ ! -e kiwi-description/root/etc/ssh ] ; then
   mkdir -p kiwi-description/root/etc/ssh 
   ssh-keygen -A -f kiwi-description/root
+  ssh-keygen -R 172.16.16.250 -f ~/.ssh/known_hosts
 fi
 if [ ! -e sle-keys.json ] ; then 
   cat > sle-keys.json << EOF
@@ -24,6 +25,7 @@ fi
 # destroy ressources
 #terraform destroy -auto-approve
 show "Creating virtual cluster"
+terraform init > /dev/null || exit 1
 terraform apply -auto-approve > /dev/null || exit 1
 
 # check that host is up

@@ -14,7 +14,7 @@ if [ ! -e sle-keys.json ] ; then
 {
   "EMAIL": "email",
   "SLE-REG": "sle-reg",
-  "SLE-HPC-REG": "sle-hpc-reg
+  "SLE-HPC-REG": "sle-hpc-reg"
 }
 EOF
 fi

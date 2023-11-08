@@ -117,7 +117,7 @@ resource "libvirt_domain" "ww4-host" {
   cloudinit = libvirt_cloudinit_disk.hostinit.id
   memory = "8192"
   vcpu   = 8
-  cpu = {
+  cpu {
     mode = "host-passthrough"
   }
 
@@ -155,7 +155,7 @@ resource "libvirt_domain" "ww4-node" {
   name   = format("demo%02s",count.index + 1)
   memory = "4096"
   vcpu  = 4
-  cpu = {
+  cpu {
     mode = "host-passthrough"
   }
 
@@ -185,7 +185,7 @@ resource "libvirt_domain" "ww4-efi" {
   name   = format("efi%02s",count.index + 1)
   memory = "4096"
   vcpu  = 4
-  cpu = {
+  cpu {
     mode = "host-passthrough"
   }
   machine = "pc-q35-7.0"

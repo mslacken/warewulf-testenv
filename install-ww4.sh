@@ -43,7 +43,7 @@ if [ -e local ] ; then
 fi 
 
 run_on_hostq $IPADDR "zypper ref" "Refreshing repos"
-run_on_host $IPADDR "zypper in -y nfs-kernel-server bash-completion warewulf4" "Installing warewulf4"
+run_on_host $IPADDR "zypper in -y nfs-kernel-server bash-completion warewulf4 yq vim" "Installing warewulf4"
 wait 2
 run_on_hostq $IPADDR "cat /etc/warewulf/warewulf.conf" "Check warewulf configuration /etc/warewulf/warewulf.conf"
 wait 2
@@ -63,4 +63,5 @@ for host in $(jq "keys[]" macs.json ) ; do
   mac=$(jq ".$host" macs.json)
   run_on_host $IPADDR "wwctl node set $host -y --netname default --hwaddr $mac" 
 done
+run_on_host $IPADDR "wwctl configure hostfile" 
 

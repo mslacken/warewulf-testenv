@@ -47,20 +47,20 @@ test -e cache/zypp && rsync -vau --chown=root:root cache/zypp/ root@$IPADDR:/var
 
 run_on_hostq $IPADDR "zypper ref" "Refreshing repos"
 run_on_host $IPADDR "zypper in -y nfs-kernel-server bash-completion warewulf4 yq vim" "Installing warewulf4"
-wait 2
+wait_key $WAIT_SHORT
 run_on_hostq $IPADDR "cat /etc/warewulf/warewulf.conf" "Check warewulf configuration /etc/warewulf/warewulf.conf"
-wait 2
+wait_key $WAIT_SHORT
 run_on_hostq $IPADDR "sed -i s/DHCPD_INTERFACE=\"\"/DHCPD_INTERFACE=\"ANY\"/ /etc/sysconfig/dhcpd" "Setting DHCPD_INTERFACE=\"ANY\" in /etc/sysconfig/dhcpd"
-wait 2
+wait_key $WAIT_SHORT
 run_on_host $IPADDR "systemctl enable --now warewulfd" "Start warewulfd"
-wait 2
+wait_key $WAIT_SHORT
 run_on_host $IPADDR "wwctl configure -a" "Configure warewulf, creating all the configuration files"
-wait 2
+wait_key $WAIT_SHORT
 run_on_host $IPADDR "wwctl node add demo[01-04] -I $IPSTART" "Adding 4 nodes"
 run_on_host $IPADDR "wwctl node add efi[01-02] -I $EFISTART" "Adding 2 EFI nodes"
-wait 2
+wait_key $WAIT_SHORT
 run_on_host $IPADDR "wwctl container import $DEMOCONTSRC $DEMOCONT --setdefault" "Importing Leap15.4 as default container"
-wait 2
+wait_key $WAIT_SHORT
 show "Add the MAC addresses for the rest of the nodes from pre defined json/csv"
 for host in $(jq "keys[]" macs.json ) ; do
   mac=$(jq ".$host" macs.json)

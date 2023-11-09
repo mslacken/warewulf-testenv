@@ -188,7 +188,6 @@ resource "libvirt_domain" "ww4-efi" {
   cpu {
     mode = "host-passthrough"
   }
-  machine = "pc-q35-7.0"
   firmware = "/usr/share/qemu/ovmf-x86_64-smm-ms-code.bin"
   nvram {
     file     = "/var/tmp/efi${count.index}_EFIVARS.fd"

@@ -25,8 +25,8 @@ fi
 # destroy ressources
 #terraform destroy -auto-approve
 show "Creating virtual cluster"
-terraform init > /dev/null || exit 1
-terraform apply -auto-approve > /dev/null || exit 1
+terraform init &> .log.tf.init || exit 1
+terraform apply -auto-approve &> .log.tf.apply || exit 1
 
 # check that host is up
 show "Waiting for the ww4-host ($IPADDR) to become online"
@@ -35,15 +35,15 @@ while true ; do
   sleep 1
 done
 show "Waiting for ww4-host to finish initial configuration"
-ssh -o 'ConnectionAttempts 5' -x root@$IPADDR "which cloud-init > /dev/null" && ssh -o 'ConnectionAttempts 5' -x root@$IPADDR "cloud-init status --wait"
+ssh -o 'ConnectionAttempts 5' -x root@$IPADDR "which cloud-init &> .log.cloud_init" && ssh -o 'ConnectionAttempts 5' -x root@$IPADDR "cloud-init status --wait"
 # install local warewulf4 if available
 if [ -e local ] ; then
   show "Copying local warewul4 rpm to host"
-  rsync -avu local/ root@$IPADDR:~/local/
+  rsync -avu local/ root@$IPADDR:~/local/ &> .log.rsync.local
 fi 
 
-test -e cache/oci && rsync -vau --chown=root:root cache/oci/ root@$IPADDR:/var/lib/warewulf/oci/
-test -e cache/zypp && rsync -vau --chown=root:root cache/zypp/ root@$IPADDR:/var/lib/zypp/
+test -e cache/oci && rsync -vau --chown=root:root cache/oci/ root@$IPADDR:/var/lib/warewulf/oci/ &> .log.rsync.oci
+test -e cache/zypp && rsync -vau --chown=root:root cache/zypp/ root@$IPADDR:/var/lib/zypp/ &> .log.rsync.zypp
 
 run_on_hostq $IPADDR "zypper ref" "Refreshing repos"
 run_on_host $IPADDR "zypper in -y nfs-kernel-server bash-completion warewulf4 yq vim" "Installing warewulf4"

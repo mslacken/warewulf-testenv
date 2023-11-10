@@ -58,6 +58,7 @@ run_on_host $IPADDR "systemctl enable --now warewulfd" "Start warewulfd"
 wait_key $WAIT_SHORT
 run_on_host $IPADDR "wwctl configure -a" "Configure warewulf, creating all the configuration files"
 wait_key $WAIT_SHORT
+ssh-keygen -R $IPSTART -f ~/.ssh/known_hosts &> /dev/null
 run_on_host $IPADDR "wwctl node add demo[01-04] -I $IPSTART" "Adding 4 nodes"
 run_on_host $IPADDR "wwctl node add efi[01-02] -I $EFISTART" "Adding 2 EFI nodes"
 wait_key $WAIT_SHORT

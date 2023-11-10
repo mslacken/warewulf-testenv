@@ -45,6 +45,8 @@ fi
 test -e cache/oci && rsync -vau --chown=root:root cache/oci/ root@$IPADDR:/var/lib/warewulf/oci/ &> .log.rsync.oci
 test -e cache/zypp && rsync -vau --chown=root:root cache/zypp/ root@$IPADDR:/var/lib/zypp/ &> .log.rsync.zypp
 
+show "ww4-host all set"
+wait_key $WAIT_SHORT
 run_on_hostq $IPADDR "zypper ref" "Refreshing repos"
 run_on_host $IPADDR "zypper in -y nfs-kernel-server bash-completion warewulf4 yq vim" "Installing warewulf4"
 wait_key $WAIT_SHORT

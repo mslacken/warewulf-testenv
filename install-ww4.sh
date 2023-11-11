@@ -49,10 +49,12 @@ show "ww4-host all set"
 wait_key $WAIT_SHORT
 run_on_hostq $IPADDR "zypper ref" "Refreshing repos"
 run_on_host $IPADDR "zypper in -y nfs-kernel-server bash-completion warewulf4 yq vim" "Installing warewulf4"
+scp tftp.service root@$IPADDR:/usr/lib/systemd/system/
+
 wait_key $WAIT_SHORT
 run_on_hostq $IPADDR "cat /etc/warewulf/warewulf.conf" "Check warewulf configuration /etc/warewulf/warewulf.conf"
 wait_key $WAIT_SHORT
-run_on_hostq $IPADDR "sed -i s/DHCPD_INTERFACE=\"\"/DHCPD_INTERFACE=\"ANY\"/ /etc/sysconfig/dhcpd" "Setting DHCPD_INTERFACE=\"ANY\" in /etc/sysconfig/dhcpd"
+run_on_hostq $IPADDR "sed -i s/DHCPD_INTERFACE=\"\"/DHCPD_INTERFACE=\"ANY\"/ /etc/sysconfig/dhcpd" "Setting DHCPD_INTERFACE=\"ANY\" /etc/sysconfig/dhcpd"
 wait_key $WAIT_SHORT
 run_on_host $IPADDR "systemctl enable --now warewulfd" "Start warewulfd"
 wait_key $WAIT_SHORT

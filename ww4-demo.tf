@@ -121,6 +121,10 @@ resource "libvirt_domain" "ww4-host" {
     mode = "host-passthrough"
   }
 
+  tpm {
+    backend_version = "2.0"
+  }
+
   network_interface {
     network_id     = libvirt_network.ww4-net.id
   }
@@ -195,6 +199,9 @@ resource "libvirt_domain" "ww4-efi" {
     template = "/usr/share/qemu/ovmf-x86_64-smm-ms-vars.bin"
   }
 
+  tpm {
+    model = "emulated"
+  }
 
   boot_device {
     dev = [ "network" ]

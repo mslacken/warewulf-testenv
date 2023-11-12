@@ -35,7 +35,7 @@ while true ; do
   sleep 1
 done
 show "Waiting for ww4-host to finish initial configuration"
-ssh -o 'ConnectionAttempts 5' -x root@$IPADDR "which cloud-init &> .log.cloud_init" && ssh -o 'ConnectionAttempts 5' -x root@$IPADDR "cloud-init status --wait"
+ssh -o 'ConnectionAttempts 5' -x root@$IPADDR "which cloud-init" &> .log.cloud_init && ssh -o 'ConnectionAttempts 5' -x root@$IPADDR "cloud-init status --wait" || { echo "Cloud Init failed"; exit 1; }
 # install local warewulf4 if available
 if [ -e local ] ; then
   show "Copying local warewul4 rpm to host"

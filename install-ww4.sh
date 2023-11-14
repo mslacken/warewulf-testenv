@@ -58,7 +58,12 @@ run_on_hostq $IPADDR "sed -i s/DHCPD_INTERFACE=\"\"/DHCPD_INTERFACE=\"ANY\"/ /et
 wait_key $WAIT_SHORT
 run_on_host $IPADDR "systemctl enable --now warewulfd" "Start warewulfd"
 wait_key $WAIT_SHORT
-run_on_host $IPADDR "wwctl configure -a" "Configure warewulf, creating all the configuration files"
+run_on_host $IPADDR "wwctl configure dhcp" "Configure warewulf, creating all the configuration files"
+run_on_host $IPADDR "wwctl configure hostfile"
+run_on_host $IPADDR "wwctl configure nfs"
+run_on_host $IPADDR "wwctl configure ssh"
+# `wwctl configure tftp` causes a systemctl error on SUSE
+run_on_host $IPADDR "wwctl configure tftp" &> /dev/null
 wait_key $WAIT_SHORT
 ssh-keygen -R $IPSTART -f ~/.ssh/known_hosts &> /dev/null
 run_on_host $IPADDR "wwctl node add demo[01-04] -I $IPSTART" "Adding 4 nodes"

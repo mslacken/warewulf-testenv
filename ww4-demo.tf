@@ -6,22 +6,23 @@ terraform {
   }
 }
 
-variable "profile" {
-  default = "ww4-demo"
+
+variable "distribution" {
+  default = "suse"
 }
 
 locals {
-  config = jsondecode(file("${path.module}/config.json"))
-  reg = jsondecode(file("${path.module}/sle-keys.json"))
-  ed25519_public = file("${path.module}/kiwi-description/root/etc/ssh/ssh_host_ed25519_key.pub")
-  ed25519_private = file("${path.module}/kiwi-description/root/etc/ssh/ssh_host_ed25519_key")
-  dsa_public = file("${path.module}/kiwi-description/root/etc/ssh/ssh_host_ed25519_key.pub")
-  dsa_private = file("${path.module}/kiwi-description/root/etc/ssh/ssh_host_ed25519_key")
-  ecdsa_public = file("${path.module}/kiwi-description/root/etc/ssh/ssh_host_ed25519_key.pub")
-  ecdsa_private = file("${path.module}/kiwi-description/root/etc/ssh/ssh_host_ed25519_key")
-  rsa_public = file("${path.module}/kiwi-description/root/etc/ssh/ssh_host_ed25519_key.pub")
-  rsa_private = file("${path.module}/kiwi-description/root/etc/ssh/ssh_host_ed25519_key")
-  authorized =file("~/.ssh/authorized_keys")
+  config          = jsondecode(file("${path.module}/${var.distribution}-config.json"))
+  # ed25519_public  = file("${path.module}/root/etc/ssh/ssh_host_ed25519_key.pub")
+  # ed25519_private = file("${path.module}/root/etc/ssh/ssh_host_ed25519_key")
+  # dsa_public      = file("${path.module}/root/etc/ssh/ssh_host_ed25519_key.pub")
+  # dsa_private     = file("${path.module}/root/etc/ssh/ssh_host_ed25519_key")
+  # ecdsa_public    = file("${path.module}/root/etc/ssh/ssh_host_ed25519_key.pub")
+  # ecdsa_private   = file("${path.module}/root/etc/ssh/ssh_host_ed25519_key")
+  # rsa_public      = file("${path.module}/root/etc/ssh/ssh_host_ed25519_key.pub")
+  # rsa_private     = file("${path.module}/root/etc/ssh/ssh_host_ed25519_key")
+  # authorized      = file("~/.ssh/authorized_keys")
+  profile         = "warewulf-testenv"
 }
 
 
@@ -35,14 +36,14 @@ resource "random_id" "base" {
 }
 
 resource "libvirt_pool" "demo-pool" {
-  name = "${var.profile}-pool"
+  name = "${var.profile}-pool-${random_id.base.hex}"
   type = "dir"
   path = local.config.STORAGE
 }
 
 
 resource "libvirt_volume" "ww4-host-base-vol" {
-  name   = "ww4-host-base-vol"
+  name   = "${local.config.profile}-base-vol"
   pool   = libvirt_pool.demo-pool.name
   source = local.config.IMAGE
   format = "qcow2"
@@ -57,7 +58,7 @@ resource "libvirt_volume" "ww4-host-vol" {
 }
 
 resource "libvirt_volume" "ww4-node-vol" {
-  name   = "${var.profile}-vdisk-${count.index}-${random_id.base.hex}.qcow2"
+  name   = "${local.profile}-vdisk-${count.index}-${random_id.base.hex}.qcow2"
   pool   = libvirt_pool.demo-pool.name
   format = "qcow2"
   size = 40399536128
@@ -66,7 +67,7 @@ resource "libvirt_volume" "ww4-node-vol" {
 
 
 resource "libvirt_network" "ww4-net" {
-  name      = "ww4-demo-${random_id.base.hex}"
+  name      = "${local.profile}-net-${random_id.base.hex}"
   addresses = ["${local.config.IPNET}/24"]
   dhcp {
     enabled = false
@@ -79,20 +80,23 @@ resource "libvirt_network" "ww4-net" {
 data "template_file" "user_data" {
   template = file("${path.module}/cloud_init.cfg")
   vars = {
-    email = local.reg.EMAIL
-    sle-reg = local.reg.SLE-REG
-    sle-hpc-reg = local.reg.SLE-HPC-REG
-    ed25519_private = local.ed25519_private
-    ed25519_public = local.ed25519_public
-    dsa_private = local.ed25519_private
-    dsa_public = local.ed25519_public
-    ecdsa_private = local.ed25519_private
-    ecdsa_public = local.ed25519_public
-    rsa_private = local.ed25519_private
-    rsa_public = local.ed25519_public
-    authorized = local.authorized
+    # ed25519_private = local.ed25519_private
+    # ed25519_public = local.ed25519_public
+    # dsa_private = local.ed25519_private
+    # dsa_public = local.ed25519_public
+    # ecdsa_private = local.ed25519_private
+    # ecdsa_public = local.ed25519_public
+    rsa_private = tls_private_key.pk.private_key_openssh
+    rsa_public  = tls_private_key.pk.public_key_openssh
+    # authorized = local.authorized
   }
 }
+
+resource "tls_private_key" "pk" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
 
 data "template_file" "network_config" {
   template = file("${path.module}/network_config.cfg")

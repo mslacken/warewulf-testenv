@@ -7,7 +7,7 @@ terraform {
 }
 
 variable "distribution" {
-  default = "suse"
+  default = "leap"
 }
 
 variable "nr-nodes" {
@@ -28,12 +28,17 @@ locals {
   authorized   = file("~/.ssh/authorized_keys")
 
   distros = {
-      "suse" = {
-      "image": "http://download.opensuse.org/distribution/openSUSE-stable/appliances/openSUSE-Leap-15.5-Minimal-VM.x86_64-15.5.0-Cloud-Build12.1.qcow2"
+      "leap" = {
+      "image": "https://download.opensuse.org/distribution/openSUSE-stable/appliances/openSUSE-Leap-15.5-Minimal-VM.x86_64-Cloud.qcow2"
       "package_manager": "zypper install -y --allow-unsigned-rpm"
-      "warewulf_package": "https://github.com/hpcng/warewulf/releases/download/v4.4.1/warewulf-4.4.1-1.git_d6f6fed.suse.lp153.x86_64.rpm"
+      "warewulf_package": "warewulf4"
       }
-      "local" = {
+      "tw" = {
+      "image": "http://download.opensuse.org/tumbleweed/appliances/openSUSE-Tumbleweed-Minimal-VM.x86_64-Cloud.qcow2"
+      "package_manager": "zypper install -y --allow-unsigned-rpm"
+      "warewulf_package": "warewulf4"
+      }
+      "local-zypp" = {
         "image": "local.qcow2"
         "package_manager":  "zypper install -y --allow-unsigned-rpm"
         "warewulf_package": "https://github.com/hpcng/warewulf/releases/download/v4.4.1/warewulf-4.4.1-1.git_d6f6fed.suse.lp153.x86_64.rpm"

@@ -18,11 +18,11 @@ variable "packages" {
   default = "warewulf_package"
 }
 locals {
-  network      = "172.16.16.0"
+  network      = "172.16.${random_integer.ip_prefix.result}.0"
   network_size = "24"
-  ip_host      = "172.16.16.250"
-  dns          = "172.16.16.1"
-  gateway      = "172.16.16.1"
+  ip_host      = "172.16.${random_integer.ip_prefix.result}.250"
+  dns          = "172.16.${random_integer.ip_prefix.result}.1"
+  gateway      = "172.16.${random_integer.ip_prefix.result}.1"
   profile      = "warewulf-testenv"
   storage-path = "/var/tmp"
   authorized   = file("~/.ssh/authorized_keys")
@@ -52,6 +52,11 @@ provider "libvirt" {
 
 resource "random_id" "base" {
   byte_length = 2
+}
+
+resource "random_integer" "ip_prefix" {
+  min = 0
+  max = 254
 }
 
 resource "libvirt_pool" "demo-pool" {
@@ -140,7 +145,7 @@ resource "libvirt_cloudinit_disk" "hostinit" {
 
 
 resource "libvirt_domain" "ww4-host" {
-  name   = "ww4-host"
+  name   = "ww4-host-${random_id.base.hex}"
   cloudinit = libvirt_cloudinit_disk.hostinit.id
   memory = "8192"
   vcpu   = 8
@@ -183,7 +188,7 @@ resource "libvirt_domain" "ww4-host" {
 resource "libvirt_domain" "ww4-nodes" {
   running = false
   count  = var.nr-nodes
-  name   = format("n%02s",count.index + 1)
+  name   = format("n%02s-${random_id.base.hex}",count.index + 1)
   memory = "4096"
   vcpu  = 4
   cpu {
@@ -220,8 +225,12 @@ resource "libvirt_domain" "ww4-nodes" {
   
 }
 
-output "vm_names" {
+output "VM_names" {
   value = concat(libvirt_domain.ww4-nodes.*.name, libvirt_domain.ww4-host.*.name)
+}
+
+output "network_config" {
+  value = [local.ip_host,local.network]
 }
 
 resource "local_file" "vm_mac" {

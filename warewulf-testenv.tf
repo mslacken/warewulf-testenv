@@ -194,12 +194,6 @@ resource "libvirt_domain" "ww4-nodes" {
   cpu {
     mode = "host-passthrough"
   }
-  machine = "pc-q35-6.1"
-  firmware = "/usr/share/qemu/ovmf-x86_64-smm-ms-code.bin"
-  nvram {
-    file     = "/var/tmp/efi${count.index}_EFIVARS.fd"
-    template = "/usr/share/qemu/ovmf-x86_64-smm-ms-vars.bin"
-  }
 
   tpm {
     backend_version = "2.0"

@@ -202,7 +202,7 @@ resource "libvirt_domain" "ww4-nodes" {
   }
 
   tpm {
-    model = "emulated"
+    backend_version = "2.0"
   }
 
   boot_device {

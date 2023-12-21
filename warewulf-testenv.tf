@@ -60,7 +60,8 @@ resource "random_integer" "ip_prefix" {
 }
 
 resource "libvirt_pool" "demo-pool" {
-  name = "${local.profile}-pool-${random_id.base.hex}"
+  # don't have a randome id attached to the pool as recreate a new pool can take ages
+  name = "${local.profile}-pool"
   type = "dir"
   path = "${local.storage-path}/${local.profile}-${random_id.base.hex}"
 }
@@ -77,7 +78,8 @@ resource "libvirt_volume" "ww4-host-vol" {
   pool   = libvirt_pool.demo-pool.name
   base_volume_id = libvirt_volume.ww4-host-base-vol.id
   format = "qcow2"
-  size = 40399536128
+  #size = 40399536128
+  size = 80799072256
 }
 
 resource "libvirt_volume" "ww4-node-vol" {
@@ -194,6 +196,12 @@ resource "libvirt_domain" "ww4-nodes" {
   cpu {
     mode = "host-passthrough"
   }
+#  machine = "pc-q35-6.1"
+#  firmware = "/usr/share/qemu/ovmf-x86_64-smm-ms-code.bin"
+#  nvram {
+#    file     = "/var/tmp/efi${count.index}_EFIVARS.fd"
+#    template = "/usr/share/qemu/ovmf-x86_64-smm-ms-vars.bin"
+#  }
 
   tpm {
     backend_version = "2.0"
